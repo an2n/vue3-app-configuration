@@ -31,47 +31,22 @@ Replace 'your-azure-configuration-readonly-connection-string' with your actual c
 
 ## Using in Vue Components
 
-The plugin provides two methods: getFeatureFlag for a non-reactive, one-time check, and getFeatureFlagReactive for a reactive, continuously updated check.
-
-### Using getFeatureFlagReactive
-
-For a ref check of the feature flag:
-
-```html
-<script setup lang="ts">
-  import { inject } from "vue";
-  import { FeatureFlagsManagerKey } from "vue3-app-configuration";
-
-  const { getFeatureFlag } = inject(FeatureFlagsManagerKey);
-
-  const isFeatureEnabled = getFeatureFlagRef(
-    "your-feature-flag-name",
-    "your-label"
-  );
-</script>
-
-<template>
-  <p v-if="isFeatureEnabled">This feature is enabled!</p>
-  <p v-else>This feature is disabled.</p>
-</template>
-```
-
-### Using getFeatureFlag
-
-For a one-time check of the feature flag:
+This plugin provides a non-reactive, one-time check called getFeatureFlag
 
 ```html
 <script setup lang="ts">
   import { inject, onMounted } from "vue";
   import { FeatureFlagsManagerKey } from "vue3-app-configuration";
 
-  const { getFeatureFlag } = inject(FeatureFlagsManagerKey);
   const isFeatureEnabled = ref(false);
+  const featureFlagsManager = inject(FeatureFlagsManagerKey);
 
   onMounted(async () => {
-    isFeatureEnabled.value = await getFeatureFlag(
-      "your-feature-flag-name', 'your-label"
-    );
+    if (featureFlagsManager) {
+      isFeatureEnabled.value = await getFeatureFlag(
+        "your-feature-flag-name', 'your-label"
+      );
+    }
   });
 </script>
 

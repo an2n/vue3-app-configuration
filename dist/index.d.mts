@@ -1,9 +1,9 @@
 import { InjectionKey, App } from 'vue';
 
-interface FeatureFlagsManager {
-    getFeatureFlag(name: string, label?: string): Promise<boolean>;
-}
-declare const FeatureFlagsManagerKey: InjectionKey<FeatureFlagsManager>;
+type GetFeatureFlagFunction = (name: string, label?: string) => Promise<boolean>;
+declare const FeatureFlagsManagerKey: InjectionKey<{
+    getFeatureFlag: GetFeatureFlagFunction;
+}>;
 declare function AppConfigurationPlugin(app: App, connectionString?: string): void;
 
 export { AppConfigurationPlugin, FeatureFlagsManagerKey };

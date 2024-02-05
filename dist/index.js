@@ -45,42 +45,33 @@ __export(src_exports, {
 });
 module.exports = __toCommonJS(src_exports);
 var import_app_configuration = require("@azure/app-configuration");
+var FeatureFlagsManagerKey = Symbol("FeatureFlagsManager");
 var featureFlagsManager = (connectionString) => {
   let client = null;
   if (connectionString) {
     client = new import_app_configuration.AppConfigurationClient(connectionString);
   }
-  return {
-    getFeatureFlag(name, label) {
-      return __async(this, null, function* () {
-        if (!client) {
-          console.warn(
-            "[App Configuration Plugin] AppConfigurationClient is not initialized."
-          );
-          return false;
-        }
-        try {
-          const response = yield client.getConfigurationSetting({
-            key: `${import_app_configuration.featureFlagPrefix}${name}`,
-            label
-          });
-          if (!(0, import_app_configuration.isFeatureFlag)(response))
-            return false;
-          return (0, import_app_configuration.parseFeatureFlag)(response).value.enabled;
-        } catch (error) {
-          console.error(
-            "[App Configuration Plugin] Error fetching feature flag.",
-            error
-          );
-          return false;
-        }
+  const getFeatureFlag = (name, label) => __async(void 0, null, function* () {
+    if (!client)
+      return false;
+    try {
+      const response = yield client.getConfigurationSetting({
+        key: `${import_app_configuration.featureFlagPrefix}${name}`,
+        label
       });
+      if (!(0, import_app_configuration.isFeatureFlag)(response))
+        return false;
+      return (0, import_app_configuration.parseFeatureFlag)(response).value.enabled;
+    } catch (error) {
+      console.error(
+        "[App Configuration Plugin] Error retrieving feature flag.",
+        error
+      );
+      return false;
     }
-  };
+  });
+  return { getFeatureFlag };
 };
-var FeatureFlagsManagerKey = Symbol(
-  "FeatureFlagsManager"
-);
 function AppConfigurationPlugin(app, connectionString) {
   app.provide(FeatureFlagsManagerKey, featureFlagsManager(connectionString));
 }
