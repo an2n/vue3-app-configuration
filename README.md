@@ -4,7 +4,7 @@ Vue 3 plugin that provides an easy way to manage feature flags in your Vue appli
 
 ## Installation
 
-```console
+```
 npm install vue3-app-configuration
 ```
 
@@ -15,12 +15,12 @@ To use vue3-app-configuration, you need to initialize it in your main Vue applic
 ```ts
 import { createApp } from "vue";
 import App from "./App.vue";
-import AppConfigurationPlguin from "vue3-app-configuration";
+import { AppConfigurationPlugin } from "vue3-app-configuration";
 
 const app = createApp(App);
 
 app.use(
-  AppConfigurationPlguin,
+  AppConfigurationPlugin,
   "your-azure-configuration-readonly-connection-string"
 );
 
@@ -31,28 +31,54 @@ Replace 'your-azure-configuration-readonly-connection-string' with your actual c
 
 ## Using in Vue Components
 
-Inject the feature flags manager and use it to check feature flags:
+The plugin provides two methods: getFeatureFlag for a non-reactive, one-time check, and getFeatureFlagReactive for a reactive, continuously updated check.
 
-```js
+### Using getFeatureFlagReactive
+
+For a ref check of the feature flag:
+
+```html
 <script setup lang="ts">
-import { inject, onMounted, ref } from 'vue';
-import { FeatureFlagsManagerKey } from 'vue3-app-configuration';
+  import { inject } from "vue";
+  import { FeatureFlagsManagerKey } from "vue3-app-configuration";
 
-const isFeatureEnabled = ref(false);
-const featureFlagsManager = inject(FeatureFlagsManagerKey);
+  const { getFeatureFlag } = inject(FeatureFlagsManagerKey);
 
-onMounted(async () => {
-  if (featureFlagsManager) {
-    isFeatureEnabled.value = await featureFlagsManager.getFeatureFlag('your-feature-flag-name');
-  }
-});
+  const isFeatureEnabled = getFeatureFlagRef(
+    "your-feature-flag-name",
+    "your-label"
+  );
 </script>
 
 <template>
   <p v-if="isFeatureEnabled">This feature is enabled!</p>
   <p v-else>This feature is disabled.</p>
 </template>
+```
+
+### Using getFeatureFlag
+
+For a one-time check of the feature flag:
+
+```html
+<script setup lang="ts">
+  import { inject, onMounted } from "vue";
+  import { FeatureFlagsManagerKey } from "vue3-app-configuration";
+
+  const { getFeatureFlag } = inject(FeatureFlagsManagerKey);
+  const isFeatureEnabled = ref(false);
+
+  onMounted(async () => {
+    isFeatureEnabled.value = await getFeatureFlag(
+      "your-feature-flag-name', 'your-label"
+    );
+  });
 </script>
+
+<template>
+  <p v-if="isFeatureEnabled">This feature is enabled!</p>
+  <p v-else>This feature is disabled.</p>
+</template>
 ```
 
 Inspired by [@azure/app-configuration](https://www.npmjs.com/package/@azure/app-configuration), [vue3-application-insights](https://www.npmjs.com/package/vue3-application-insights) and
