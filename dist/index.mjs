@@ -62,13 +62,11 @@ var featureFlagsManager = (connectionString) => {
 var FeatureFlagsManagerKey = Symbol(
   "FeatureFlagsManager"
 );
-var src_default = {
-  install(app, connectionString) {
-    app.provide(FeatureFlagsManagerKey, featureFlagsManager(connectionString));
-  },
-  FeatureFlagsManagerKey
-};
+function AppConfigurationPlugin(app, connectionString) {
+  app.provide(FeatureFlagsManagerKey, featureFlagsManager(connectionString));
+}
 export {
-  src_default as default
+  AppConfigurationPlugin,
+  FeatureFlagsManagerKey
 };
 //# sourceMappingURL=index.mjs.map

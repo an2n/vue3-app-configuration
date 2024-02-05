@@ -40,7 +40,8 @@ var __async = (__this, __arguments, generator) => {
 // src/index.ts
 var src_exports = {};
 __export(src_exports, {
-  default: () => src_default
+  AppConfigurationPlugin: () => AppConfigurationPlugin,
+  FeatureFlagsManagerKey: () => FeatureFlagsManagerKey
 });
 module.exports = __toCommonJS(src_exports);
 var import_app_configuration = require("@azure/app-configuration");
@@ -80,10 +81,12 @@ var featureFlagsManager = (connectionString) => {
 var FeatureFlagsManagerKey = Symbol(
   "FeatureFlagsManager"
 );
-var src_default = {
-  install(app, connectionString) {
-    app.provide(FeatureFlagsManagerKey, featureFlagsManager(connectionString));
-  },
+function AppConfigurationPlugin(app, connectionString) {
+  app.provide(FeatureFlagsManagerKey, featureFlagsManager(connectionString));
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  AppConfigurationPlugin,
   FeatureFlagsManagerKey
-};
+});
 //# sourceMappingURL=index.js.map

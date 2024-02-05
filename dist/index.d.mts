@@ -1,11 +1,9 @@
-import { App, InjectionKey } from 'vue';
+import { InjectionKey, App } from 'vue';
 
 interface FeatureFlagsManager {
     getFeaturedFlag(name: string, label?: string): Promise<boolean>;
 }
-declare const _default: {
-    install(app: App, connectionString: string): void;
-    FeatureFlagsManagerKey: InjectionKey<FeatureFlagsManager>;
-};
+declare const FeatureFlagsManagerKey: InjectionKey<FeatureFlagsManager>;
+declare function AppConfigurationPlugin(app: App, connectionString?: string): void;
 
-export { _default as default };
+export { AppConfigurationPlugin, FeatureFlagsManagerKey };
