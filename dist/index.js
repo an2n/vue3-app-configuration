@@ -51,7 +51,7 @@ var featureFlagsManager = (connectionString) => {
     client = new import_app_configuration.AppConfigurationClient(connectionString);
   }
   return {
-    getFeaturedFlag(name, label = "default") {
+    getFeatureFlag(name, label) {
       return __async(this, null, function* () {
         if (!client) {
           console.warn(

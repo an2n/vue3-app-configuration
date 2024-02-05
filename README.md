@@ -43,7 +43,7 @@ const featureFlagsManager = inject(FeatureFlagsManagerKey);
 
 onMounted(async () => {
   if (featureFlagsManager) {
-    isFeatureEnabled.value = await featureFlagsManager.getFeaturedFlag('your-feature-flag-name');
+    isFeatureEnabled.value = await featureFlagsManager.getFeatureFlag('your-feature-flag-name');
   }
 });
 </script>

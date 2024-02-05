@@ -7,7 +7,7 @@ import {
 } from "@azure/app-configuration";
 
 interface FeatureFlagsManager {
-  getFeaturedFlag(name: string, label?: string): Promise<boolean>;
+  getFeatureFlag(name: string, label?: string): Promise<boolean>;
 }
 
 const featureFlagsManager = (
@@ -20,7 +20,7 @@ const featureFlagsManager = (
   }
 
   return {
-    async getFeaturedFlag(name: string, label = "default") {
+    async getFeatureFlag(name: string, label?: string) {
       if (!client) {
         console.warn(
           "[App Configuration Plugin] AppConfigurationClient is not initialized."
