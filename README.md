@@ -55,5 +55,5 @@ onMounted(async () => {
 </script>
 ```
 
-Inspired by [@azure/app-configuration](https://www.npmjs.com/package/@azure/app-configuration), [vue3-application-insights](https://www.npmjs.com/package/vue3-application-insights) &
-[Feature Flags in Vue with Azure App Configuration](https://www.tvaidyan.com/2022/07/14/feature-flags-in-vue-with-azure-app-configuration/)
+Inspired by [@azure/app-configuration](https://www.npmjs.com/package/@azure/app-configuration), [vue3-application-insights](https://www.npmjs.com/package/vue3-application-insights) and
+[Feature Flags in Vue with Azure App Configuration](https://www.tvaidyan.com/2022/07/14/feature-flags-in-vue-with-azure-app-configuration)
