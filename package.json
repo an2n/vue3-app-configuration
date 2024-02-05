@@ -1,0 +1,43 @@
+{
+  "name": "vue3-app-configuration",
+  "version": "1.0.0",
+  "description": "A Vue 3 plugin for integrating Azure App Configuration, including feature flags management.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsup"
+  },
+  "files": [
+    "dist/**/*",
+    "src/**/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/an2n/vue3-app-configuration.git"
+  },
+  "keywords": [
+    "vue",
+    "vue3",
+    "app-configuration",
+    "feature-flags",
+    "azure"
+  ],
+  "author": "Anton Lilleby",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/an2n/vue3-app-configuration/issues"
+  },
+  "homepage": "https://github.com/an2n/vue3-app-configuration#readme",
+  "dependencies": {
+    "@azure/app-configuration": "^1.5.0"
+  },
+  "peerDependencies": {
+    "vue": "^3.0.0"
+  },
+  "devDependencies": {
+    "tsup": "^7.2.0",
+    "typescript": "^5.2.2"
+  }
+}
