@@ -10,7 +10,9 @@ interface FeatureFlagsManager {
   getFeaturedFlag(name: string, label?: string): Promise<boolean>;
 }
 
-const featureFlagsManager = (connectionString: string): FeatureFlagsManager => {
+const featureFlagsManager = (
+  connectionString?: string
+): FeatureFlagsManager => {
   let client: AppConfigurationClient | null = null;
 
   if (connectionString) {
@@ -48,9 +50,8 @@ const FeatureFlagsManagerKey: InjectionKey<FeatureFlagsManager> = Symbol(
   "FeatureFlagsManager"
 );
 
-export default {
-  install(app: App, connectionString: string) {
-    app.provide(FeatureFlagsManagerKey, featureFlagsManager(connectionString));
-  },
-  FeatureFlagsManagerKey,
-};
+function AppConfigurationPlugin(app: App, connectionString?: string) {
+  app.provide(FeatureFlagsManagerKey, featureFlagsManager(connectionString));
+}
+
+export { FeatureFlagsManagerKey, AppConfigurationPlugin };
