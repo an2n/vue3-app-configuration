@@ -45,6 +45,7 @@ __export(src_exports, {
 });
 module.exports = __toCommonJS(src_exports);
 var import_app_configuration = require("@azure/app-configuration");
+var import_vue = require("vue");
 var FeatureFlagsManagerKey = Symbol("FeatureFlagsManager");
 var featureFlagsManager = (connectionString) => {
   let client = null;
@@ -70,7 +71,29 @@ var featureFlagsManager = (connectionString) => {
       return false;
     }
   });
-  return { getFeatureFlag };
+  const getFeatureFlagRef = (name, label) => {
+    const isEnabled = (0, import_vue.ref)(false);
+    if (!client)
+      return isEnabled;
+    try {
+      client.getConfigurationSetting({
+        key: `${import_app_configuration.featureFlagPrefix}${name}`,
+        label
+      }).then((response) => {
+        if (!(0, import_app_configuration.isFeatureFlag)(response))
+          return isEnabled;
+        isEnabled.value = (0, import_app_configuration.parseFeatureFlag)(response).value.enabled;
+        return isEnabled;
+      });
+    } catch (error) {
+      console.error(
+        "[App Configuration Plugin] Error retrieving feature flag.",
+        error
+      );
+    }
+    return isEnabled;
+  };
+  return { getFeatureFlag, getFeatureFlagRef };
 };
 function AppConfigurationPlugin(app, connectionString) {
   app.provide(FeatureFlagsManagerKey, featureFlagsManager(connectionString));

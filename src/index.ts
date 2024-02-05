@@ -4,24 +4,24 @@ import {
   isFeatureFlag,
   parseFeatureFlag,
 } from "@azure/app-configuration";
-import { type App, type InjectionKey } from "vue";
+import { ref, type App, type InjectionKey, type Ref } from "vue";
 
-type GetFeatureFlagFunction = (
-  name: string,
-  label?: string
-) => Promise<boolean>;
+type TypeGetFeatureFlag = (name: string, label?: string) => Promise<boolean>;
+type TypeGetFeatureFlagRef = (name: string, label?: string) => Ref<boolean>;
 
-interface FeatureFlagsManager {
-  getFeatureFlag: GetFeatureFlagFunction;
+interface IFeatureFlagsManager {
+  getFeatureFlag: TypeGetFeatureFlag;
+  getFeatureFlagRef: TypeGetFeatureFlagRef;
 }
 
 const FeatureFlagsManagerKey: InjectionKey<{
-  getFeatureFlag: GetFeatureFlagFunction;
+  getFeatureFlag: TypeGetFeatureFlag;
+  getFeatureFlagRef: TypeGetFeatureFlagRef;
 }> = Symbol("FeatureFlagsManager");
 
 const featureFlagsManager = (
   connectionString?: string
-): FeatureFlagsManager => {
+): IFeatureFlagsManager => {
   let client: AppConfigurationClient | null = null;
 
   if (connectionString) {
@@ -49,7 +49,31 @@ const featureFlagsManager = (
     }
   };
 
-  return { getFeatureFlag };
+  const getFeatureFlagRef = (name: string, label?: string): Ref<boolean> => {
+    const isEnabled = ref(false);
+
+    if (!client) return isEnabled;
+    try {
+      client
+        .getConfigurationSetting({
+          key: `${featureFlagPrefix}${name}`,
+          label,
+        })
+        .then((response) => {
+          if (!isFeatureFlag(response)) return isEnabled;
+          isEnabled.value = parseFeatureFlag(response).value.enabled;
+          return isEnabled;
+        });
+    } catch (error) {
+      console.error(
+        "[App Configuration Plugin] Error retrieving feature flag.",
+        error
+      );
+    }
+    return isEnabled;
+  };
+
+  return { getFeatureFlag, getFeatureFlagRef };
 };
 
 function AppConfigurationPlugin(app: App, connectionString?: string) {

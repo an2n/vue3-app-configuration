@@ -26,6 +26,7 @@ import {
   isFeatureFlag,
   parseFeatureFlag
 } from "@azure/app-configuration";
+import { ref } from "vue";
 var FeatureFlagsManagerKey = Symbol("FeatureFlagsManager");
 var featureFlagsManager = (connectionString) => {
   let client = null;
@@ -51,7 +52,29 @@ var featureFlagsManager = (connectionString) => {
       return false;
     }
   });
-  return { getFeatureFlag };
+  const getFeatureFlagRef = (name, label) => {
+    const isEnabled = ref(false);
+    if (!client)
+      return isEnabled;
+    try {
+      client.getConfigurationSetting({
+        key: `${featureFlagPrefix}${name}`,
+        label
+      }).then((response) => {
+        if (!isFeatureFlag(response))
+          return isEnabled;
+        isEnabled.value = parseFeatureFlag(response).value.enabled;
+        return isEnabled;
+      });
+    } catch (error) {
+      console.error(
+        "[App Configuration Plugin] Error retrieving feature flag.",
+        error
+      );
+    }
+    return isEnabled;
+  };
+  return { getFeatureFlag, getFeatureFlagRef };
 };
 function AppConfigurationPlugin(app, connectionString) {
   app.provide(FeatureFlagsManagerKey, featureFlagsManager(connectionString));

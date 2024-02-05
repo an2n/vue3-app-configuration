@@ -31,7 +31,11 @@ Replace 'your-azure-configuration-readonly-connection-string' with your actual c
 
 ## Using in Vue Components
 
-This plugin provides a non-reactive, one-time check called getFeatureFlag
+You can use the `vue3-app-configuration` plugin in your Vue components in two ways: using a non-reactive method for a one-time check or a reactive method for ongoing checks and shorter code.
+
+### Non-Reactive Usage
+
+For a one-time check of the feature flag, you can use the `getFeatureFlag` method. This is useful when you need to check the feature flag status once, such as on component mount.
 
 ```html
 <script setup lang="ts">
@@ -44,7 +48,8 @@ This plugin provides a non-reactive, one-time check called getFeatureFlag
   onMounted(async () => {
     if (featureFlagsManager) {
       isFeatureEnabled.value = await getFeatureFlag(
-        "your-feature-flag-name', 'your-label"
+        "your-feature-flag-name",
+        "your-label"
       );
     }
   });
@@ -56,5 +61,33 @@ This plugin provides a non-reactive, one-time check called getFeatureFlag
 </template>
 ```
 
-Inspired by [@azure/app-configuration](https://www.npmjs.com/package/@azure/app-configuration), [vue3-application-insights](https://www.npmjs.com/package/vue3-application-insights) and
-[Feature Flags in Vue with Azure App Configuration](https://www.tvaidyan.com/2022/07/14/feature-flags-in-vue-with-azure-app-configuration)
+### Reactive Usage
+
+For ongoing checks where you want the component to reactively update based on the feature flag status, use the getFeatureFlagReactive method. This returns a Vue ref and features a shorter code snippet.
+
+```html
+<script setup lang="ts">
+  import { inject } from "vue";
+  import { FeatureFlagsManagerKey } from "vue3-app-configuration";
+
+  const featureFlagsManager = inject(FeatureFlagsManagerKey);
+
+  const isFeatureEnabled = featureFlagsManager
+    ? featureFlagsManager.getFeatureFlagReactive(
+        "your-feature-flag-name",
+        "your-label"
+      )
+    : ref(false);
+</script>
+
+<template>
+  <p v-if="isFeatureEnabled">This feature is enabled!</p>
+  <p v-else>This feature is disabled.</p>
+</template>
+```
+
+Inspired by
+[@azure/app-configuration](https://www.npmjs.com/package/@azure/app-configuration),
+[vue3-application-insights](https://www.npmjs.com/package/vue3-application-insights)
+and [Feature Flags in Vue with Azure App
+Configuration](https://www.tvaidyan.com/2022/07/14/feature-flags-in-vue-with-azure-app-configuration)
