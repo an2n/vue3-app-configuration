@@ -41,7 +41,8 @@ var __async = (__this, __arguments, generator) => {
 var src_exports = {};
 __export(src_exports, {
   AppConfigurationPlugin: () => AppConfigurationPlugin,
-  FeatureFlagsManagerKey: () => FeatureFlagsManagerKey
+  FeatureFlagsManagerKey: () => FeatureFlagsManagerKey,
+  useFeatureFlags: () => useFeatureFlags
 });
 module.exports = __toCommonJS(src_exports);
 var import_app_configuration = require("@azure/app-configuration");
@@ -96,11 +97,23 @@ var featureFlagsManager = (connectionString) => {
   return { getFeatureFlag, getFeatureFlagRef };
 };
 function AppConfigurationPlugin(app, connectionString) {
-  app.provide(FeatureFlagsManagerKey, featureFlagsManager(connectionString));
+  const manager = featureFlagsManager(connectionString);
+  app.provide(FeatureFlagsManagerKey, manager);
+  app.config.globalProperties.$featureFlags = manager;
 }
+var useFeatureFlags = () => {
+  const featureFlagsManager2 = (0, import_vue.inject)(
+    FeatureFlagsManagerKey
+  );
+  if (!featureFlagsManager2) {
+    throw new Error("FeatureFlagsManager is not provided");
+  }
+  return featureFlagsManager2;
+};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AppConfigurationPlugin,
-  FeatureFlagsManagerKey
+  FeatureFlagsManagerKey,
+  useFeatureFlags
 });
 //# sourceMappingURL=index.js.map

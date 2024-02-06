@@ -1,6 +1,6 @@
 # vue3-app-configuration
 
-Vue 3 plugin that provides an easy way to manage feature flags in your Vue application using Azure App Configuration. This plugin allows you to use feature flags and toggling in different environments.
+Vue 3 plugin that provides an easy way to manage feature flags in your Vue 3 application using Azure App Configuration. This plugin allows you to use feature flags and toggle different environments.
 
 ## Installation
 
@@ -10,7 +10,7 @@ npm install vue3-app-configuration
 
 ## Get started
 
-To use vue3-app-configuration, you need to initialize it in your main Vue application file, typically main.ts or main.js.
+To use vue3-app-configuration, you need to initialize it in your main application file, typically main.ts or main.js.
 
 ```ts
 import { createApp } from "vue";
@@ -27,57 +27,42 @@ app.use(
 app.mount("#app");
 ```
 
-Replace 'your-azure-configuration-readonly-connection-string' with your actual connection string.
+Replace 'your-azure-configuration-readonly-connection-string' with your actual connection string. You can use this guide for refence [Feature Flags in Vue with Azure App Configuration](https://www.tvaidyan.com/2022/07/14/feature-flags-in-vue-with-azure-app-configuration).
 
 ## Using in Vue Components
 
-You can use the `vue3-app-configuration` plugin in your Vue components in two ways: using a non-reactive method for a one-time check or a reactive method for ongoing checks and shorter code.
+You can use the `vue3-app-configuration` plugin in your Vue components in two ways: using a async non-reactive method or a reactive method.
 
 ### Non-Reactive Usage
 
-For a one-time check of the feature flag, you can use the `getFeatureFlag` method. This is useful when you need to check the feature flag status once, such as on component mount.
-
 ```html
 <script setup lang="ts">
-  import { inject, onMounted } from "vue";
-  import { FeatureFlagsManagerKey } from "vue3-app-configuration";
+  import { onMounted, ref } from "vue";
+  import { useFeatureFlags } from "vue3-app-configuration";
 
-  const isFeatureEnabled = ref(false);
-  const featureFlagsManager = inject(FeatureFlagsManagerKey);
+  const { getFeatureFlag } = useFeatureFlags();
 
   onMounted(async () => {
-    if (featureFlagsManager) {
-      isFeatureEnabled.value = await getFeatureFlag(
-        "your-feature-flag-name",
-        "your-label"
-      );
-    }
+    const isFeatureEnabled = await getFeatureFlag(
+      "your-feature-flag-name",
+      "your-label"
+    );
   });
 </script>
-
-<template>
-  <p v-if="isFeatureEnabled">This feature is enabled!</p>
-  <p v-else>This feature is disabled.</p>
-</template>
 ```
 
 ### Reactive Usage
 
-For ongoing checks where you want the component to reactively update based on the feature flag status, use the getFeatureFlagReactive method. This returns a Vue ref and features a shorter code snippet.
-
 ```html
 <script setup lang="ts">
-  import { inject } from "vue";
-  import { FeatureFlagsManagerKey } from "vue3-app-configuration";
+  import { useFeatureFlags } from "vue3-app-configuration";
 
-  const featureFlagsManager = inject(FeatureFlagsManagerKey);
+  const { getFeatureFlagRef } = useFeatureFlags();
 
-  const isFeatureEnabled = featureFlagsManager
-    ? featureFlagsManager.getFeatureFlagReactive(
-        "your-feature-flag-name",
-        "your-label"
-      )
-    : ref(false);
+  const isFeatureEnabled = getFeatureFlagRef(
+    "your-feature-flag-name",
+    "your-label"
+  );
 </script>
 
 <template>
@@ -87,7 +72,7 @@ For ongoing checks where you want the component to reactively update based on th
 ```
 
 Inspired by
-[@azure/app-configuration](https://www.npmjs.com/package/@azure/app-configuration),
-[vue3-application-insights](https://www.npmjs.com/package/vue3-application-insights)
-and [Feature Flags in Vue with Azure App
-Configuration](https://www.tvaidyan.com/2022/07/14/feature-flags-in-vue-with-azure-app-configuration)
+
+- [@azure/app-configuration](https://www.npmjs.com/package/@azure/app-configuration)
+- [vue3-application-insights](https://www.npmjs.com/package/vue3-application-insights)
+- [Feature Flags in Vue with Azure App Configuration](https://www.tvaidyan.com/2022/07/14/feature-flags-in-vue-with-azure-app-configuration)

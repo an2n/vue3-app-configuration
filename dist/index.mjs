@@ -26,7 +26,7 @@ import {
   isFeatureFlag,
   parseFeatureFlag
 } from "@azure/app-configuration";
-import { ref } from "vue";
+import { ref, inject } from "vue";
 var FeatureFlagsManagerKey = Symbol("FeatureFlagsManager");
 var featureFlagsManager = (connectionString) => {
   let client = null;
@@ -77,10 +77,22 @@ var featureFlagsManager = (connectionString) => {
   return { getFeatureFlag, getFeatureFlagRef };
 };
 function AppConfigurationPlugin(app, connectionString) {
-  app.provide(FeatureFlagsManagerKey, featureFlagsManager(connectionString));
+  const manager = featureFlagsManager(connectionString);
+  app.provide(FeatureFlagsManagerKey, manager);
+  app.config.globalProperties.$featureFlags = manager;
 }
+var useFeatureFlags = () => {
+  const featureFlagsManager2 = inject(
+    FeatureFlagsManagerKey
+  );
+  if (!featureFlagsManager2) {
+    throw new Error("FeatureFlagsManager is not provided");
+  }
+  return featureFlagsManager2;
+};
 export {
   AppConfigurationPlugin,
-  FeatureFlagsManagerKey
+  FeatureFlagsManagerKey,
+  useFeatureFlags
 };
 //# sourceMappingURL=index.mjs.map
