@@ -31,7 +31,7 @@ Replace 'your-azure-configuration-readonly-connection-string' with your actual c
 
 ## Using in Vue Components
 
-You can use the `vue3-app-configuration` plugin in your Vue components in two ways: using a async non-reactive method or a reactive method.
+You can use the `vue3-app-configuration` plugin in your Vue components in two ways: using an async non-reactive method or a non-blocking reactive method.
 
 ### Non-Reactive Usage
 
