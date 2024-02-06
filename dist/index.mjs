@@ -36,18 +36,25 @@ var featureFlagsManager = (connectionString) => {
     appConfigurationClient = new AppConfigurationClient(connectionString);
   }
   const getFeatureFlag = (name, label) => {
-    const isEnabled = ref(false);
-    if (!appConfigurationClient)
-      return isEnabled;
+    const isFeatureEnabled = ref(false);
+    const featureDescription = ref("");
+    if (!appConfigurationClient) {
+      return { isFeatureEnabled, featureDescription };
+    }
     try {
       appConfigurationClient.getConfigurationSetting({
         key: `${featureFlagPrefix}${name}`,
         label
       }).then((response) => {
-        if (!isFeatureFlag(response))
-          return isEnabled;
-        isEnabled.value = parseFeatureFlag(response).value.enabled;
-        return isEnabled;
+        if (!isFeatureFlag(response)) {
+          return { isFeatureEnabled, featureDescription };
+        }
+        const {
+          value: { enabled, description = "" }
+        } = parseFeatureFlag(response);
+        isFeatureEnabled.value = enabled;
+        featureDescription.value = description;
+        return { isFeatureEnabled, featureDescription };
       });
     } catch (error) {
       console.error(
@@ -55,25 +62,34 @@ var featureFlagsManager = (connectionString) => {
         error
       );
     }
-    return isEnabled;
+    return { isFeatureEnabled, featureDescription };
   };
   const getFeatureFlagAsync = (name, label) => __async(void 0, null, function* () {
-    if (!appConfigurationClient)
-      return false;
+    let isFeatureEnabled = false;
+    let featureDescription = "";
+    if (!appConfigurationClient) {
+      return { isFeatureEnabled, featureDescription };
+    }
     try {
       const response = yield appConfigurationClient.getConfigurationSetting({
         key: `${featureFlagPrefix}${name}`,
         label
       });
-      if (!isFeatureFlag(response))
-        return false;
-      return parseFeatureFlag(response).value.enabled;
+      if (!isFeatureFlag(response)) {
+        return { isFeatureEnabled, featureDescription };
+      }
+      const {
+        value: { enabled, description = "" }
+      } = parseFeatureFlag(response);
+      isFeatureEnabled = enabled;
+      featureDescription = description;
+      return { isFeatureEnabled, featureDescription };
     } catch (error) {
       console.error(
         "[App Configuration Plugin] Error retrieving feature flag.",
         error
       );
-      return false;
+      return { isFeatureEnabled, featureDescription };
     }
   });
   return { appConfigurationClient, getFeatureFlag, getFeatureFlagAsync };

@@ -41,14 +41,14 @@ You can use the `vue3-app-configuration` plugin in your Vue components in two wa
 
   const { getFeatureFlag } = useFeatureFlags();
 
-  const isFeatureEnabled = getFeatureFlag(
+  const { isFeatureEnabled, featureDescription } = getFeatureFlag(
     "your-feature-flag-name",
     "your-label"
   );
 </script>
 
 <template>
-  <p v-if="isFeatureEnabled">This feature is enabled</p>
+  <p v-if="isFeatureEnabled">{{ featureDescription }}</p>
   <p v-else>This feature is disabled</p>
 </template>
 ```
@@ -63,7 +63,7 @@ You can use the `vue3-app-configuration` plugin in your Vue components in two wa
   const { getFeatureFlagAsync } = useFeatureFlags();
 
   onMounted(async () => {
-    const isFeatureEnabled = await getFeatureFlagAsync(
+    const { isFeatureEnabled, featureDescription } = await getFeatureFlagAsync(
       "your-feature-flag-name",
       "your-label"
     );
