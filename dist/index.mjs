@@ -26,7 +26,7 @@ import {
   isFeatureFlag,
   parseFeatureFlag
 } from "@azure/app-configuration";
-import { ref, inject } from "vue";
+import { inject, ref } from "vue";
 var FeatureFlagsManagerKey = Symbol("FeatureFlagsManager");
 var featureFlagsManager = (connectionString) => {
   let client = null;
@@ -86,7 +86,9 @@ var useFeatureFlags = () => {
     FeatureFlagsManagerKey
   );
   if (!featureFlagsManager2) {
-    throw new Error("FeatureFlagsManager is not provided");
+    throw new Error(
+      "[App Configuration Plugin] FeatureFlagsManager is not provided."
+    );
   }
   return featureFlagsManager2;
 };

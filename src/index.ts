@@ -4,7 +4,7 @@ import {
   isFeatureFlag,
   parseFeatureFlag,
 } from "@azure/app-configuration";
-import { ref, type App, type InjectionKey, type Ref, inject } from "vue";
+import { inject, ref, type App, type InjectionKey, type Ref } from "vue";
 
 type TypeGetFeatureFlag = (name: string, label?: string) => Promise<boolean>;
 type TypeGetFeatureFlagRef = (name: string, label?: string) => Ref<boolean>;
@@ -87,7 +87,9 @@ export const useFeatureFlags = () => {
     FeatureFlagsManagerKey
   ) as IFeatureFlagsManager;
   if (!featureFlagsManager) {
-    throw new Error("FeatureFlagsManager is not provided");
+    throw new Error(
+      "[App Configuration Plugin] FeatureFlagsManager is not provided."
+    );
   }
   return featureFlagsManager;
 };

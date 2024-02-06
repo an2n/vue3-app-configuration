@@ -106,7 +106,9 @@ var useFeatureFlags = () => {
     FeatureFlagsManagerKey
   );
   if (!featureFlagsManager2) {
-    throw new Error("FeatureFlagsManager is not provided");
+    throw new Error(
+      "[App Configuration Plugin] FeatureFlagsManager is not provided."
+    );
   }
   return featureFlagsManager2;
 };

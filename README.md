@@ -1,6 +1,6 @@
 # vue3-app-configuration
 
-Vue 3 plugin that provides an easy way to manage feature flags in your Vue 3 application using Azure App Configuration. This plugin allows you to use feature flags and toggle different environments.
+Vue 3 plugin that provides an easy way to manage feature flags in your Vue 3 application through Azure App Configuration. This plugin allows you to use feature flags and toggle between different environments.
 
 ## Installation
 
@@ -27,7 +27,7 @@ app.use(
 app.mount("#app");
 ```
 
-Replace 'your-azure-configuration-readonly-connection-string' with your actual connection string. You can use this guide for refence [Feature Flags in Vue with Azure App Configuration](https://www.tvaidyan.com/2022/07/14/feature-flags-in-vue-with-azure-app-configuration).
+Replace 'your-azure-configuration-readonly-connection-string' with your actual connection string. For help with setting up a connection string and using feature flags in Azure, check out this guide: [Feature Flags in Vue with Azure App Configuration](https://www.tvaidyan.com/2022/07/14/feature-flags-in-vue-with-azure-app-configuration).
 
 ## Using in Vue Components
 
