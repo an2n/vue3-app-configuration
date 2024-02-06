@@ -27,37 +27,20 @@ import {
   parseFeatureFlag
 } from "@azure/app-configuration";
 import { inject, ref } from "vue";
-var FeatureFlagsManagerKey = Symbol("FeatureFlagsManager");
+var FeatureFlagsManagerKey = Symbol(
+  "FeatureFlagsManager"
+);
 var featureFlagsManager = (connectionString) => {
-  let client = null;
+  let appConfigurationClient = null;
   if (connectionString) {
-    client = new AppConfigurationClient(connectionString);
+    appConfigurationClient = new AppConfigurationClient(connectionString);
   }
-  const getFeatureFlag = (name, label) => __async(void 0, null, function* () {
-    if (!client)
-      return false;
-    try {
-      const response = yield client.getConfigurationSetting({
-        key: `${featureFlagPrefix}${name}`,
-        label
-      });
-      if (!isFeatureFlag(response))
-        return false;
-      return parseFeatureFlag(response).value.enabled;
-    } catch (error) {
-      console.error(
-        "[App Configuration Plugin] Error retrieving feature flag.",
-        error
-      );
-      return false;
-    }
-  });
-  const getFeatureFlagRef = (name, label) => {
+  const getFeatureFlag = (name, label) => {
     const isEnabled = ref(false);
-    if (!client)
+    if (!appConfigurationClient)
       return isEnabled;
     try {
-      client.getConfigurationSetting({
+      appConfigurationClient.getConfigurationSetting({
         key: `${featureFlagPrefix}${name}`,
         label
       }).then((response) => {
@@ -74,12 +57,31 @@ var featureFlagsManager = (connectionString) => {
     }
     return isEnabled;
   };
-  return { getFeatureFlag, getFeatureFlagRef };
+  const getFeatureFlagAsync = (name, label) => __async(void 0, null, function* () {
+    if (!appConfigurationClient)
+      return false;
+    try {
+      const response = yield appConfigurationClient.getConfigurationSetting({
+        key: `${featureFlagPrefix}${name}`,
+        label
+      });
+      if (!isFeatureFlag(response))
+        return false;
+      return parseFeatureFlag(response).value.enabled;
+    } catch (error) {
+      console.error(
+        "[App Configuration Plugin] Error retrieving feature flag.",
+        error
+      );
+      return false;
+    }
+  });
+  return { appConfigurationClient, getFeatureFlag, getFeatureFlagAsync };
 };
 function AppConfigurationPlugin(app, connectionString) {
   const manager = featureFlagsManager(connectionString);
   app.provide(FeatureFlagsManagerKey, manager);
-  app.config.globalProperties.$featureFlags = manager;
+  app.config.globalProperties.featureFlagsManager = manager;
 }
 var useFeatureFlags = () => {
   const featureFlagsManager2 = inject(
@@ -94,7 +96,6 @@ var useFeatureFlags = () => {
 };
 export {
   AppConfigurationPlugin,
-  FeatureFlagsManagerKey,
   useFeatureFlags
 };
 //# sourceMappingURL=index.mjs.map

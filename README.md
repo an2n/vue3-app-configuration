@@ -33,17 +33,37 @@ Replace 'your-azure-configuration-readonly-connection-string' with your actual c
 
 You can use the `vue3-app-configuration` plugin in your Vue components in two ways: using an async non-reactive method or a non-blocking reactive method.
 
-### Non-Reactive Usage
+### Reactive Usage
 
 ```html
 <script setup lang="ts">
-  import { onMounted, ref } from "vue";
   import { useFeatureFlags } from "vue3-app-configuration";
 
   const { getFeatureFlag } = useFeatureFlags();
 
+  const isFeatureEnabled = getFeatureFlag(
+    "your-feature-flag-name",
+    "your-label"
+  );
+</script>
+
+<template>
+  <p v-if="isFeatureEnabled">This feature is enabled</p>
+  <p v-else>This feature is disabled</p>
+</template>
+```
+
+### Non-Reactive Usage
+
+```html
+<script setup lang="ts">
+  import { onMounted } from "vue";
+  import { useFeatureFlags } from "vue3-app-configuration";
+
+  const { getFeatureFlagAsync } = useFeatureFlags();
+
   onMounted(async () => {
-    const isFeatureEnabled = await getFeatureFlag(
+    const isFeatureEnabled = await getFeatureFlagAsync(
       "your-feature-flag-name",
       "your-label"
     );
@@ -51,25 +71,9 @@ You can use the `vue3-app-configuration` plugin in your Vue components in two wa
 </script>
 ```
 
-### Reactive Usage
+## AppConfigurationClient
 
-```html
-<script setup lang="ts">
-  import { useFeatureFlags } from "vue3-app-configuration";
-
-  const { getFeatureFlagRef } = useFeatureFlags();
-
-  const isFeatureEnabled = getFeatureFlagRef(
-    "your-feature-flag-name",
-    "your-label"
-  );
-</script>
-
-<template>
-  <p v-if="isFeatureEnabled">This feature is enabled!</p>
-  <p v-else>This feature is disabled.</p>
-</template>
-```
+The AppConfigurationClient instance is exposed at `this.featureFlagsManager.appConfigurationClient`.
 
 Inspired by
 

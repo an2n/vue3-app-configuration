@@ -1,16 +1,15 @@
-import { InjectionKey, App, Ref } from 'vue';
+import { AppConfigurationClient } from '@azure/app-configuration';
+import { App, Ref } from 'vue';
 
-type TypeGetFeatureFlag = (name: string, label?: string) => Promise<boolean>;
-type TypeGetFeatureFlagRef = (name: string, label?: string) => Ref<boolean>;
+type TypeAppConfigurationClient = AppConfigurationClient | null;
+type TypeGetFeatureFlag = (name: string, label?: string) => Ref<boolean>;
+type TypeGetFeatureFlagAsync = (name: string, label?: string) => Promise<boolean>;
 interface IFeatureFlagsManager {
+    appConfigurationClient: TypeAppConfigurationClient;
     getFeatureFlag: TypeGetFeatureFlag;
-    getFeatureFlagRef: TypeGetFeatureFlagRef;
+    getFeatureFlagAsync: TypeGetFeatureFlagAsync;
 }
-declare const FeatureFlagsManagerKey: InjectionKey<{
-    getFeatureFlag: TypeGetFeatureFlag;
-    getFeatureFlagRef: TypeGetFeatureFlagRef;
-}>;
 declare function AppConfigurationPlugin(app: App, connectionString?: string): void;
 declare const useFeatureFlags: () => IFeatureFlagsManager;
 
-export { AppConfigurationPlugin, FeatureFlagsManagerKey, useFeatureFlags };
+export { AppConfigurationPlugin, useFeatureFlags };
