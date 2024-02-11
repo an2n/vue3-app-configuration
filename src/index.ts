@@ -6,61 +6,108 @@ import {
 } from "@azure/app-configuration";
 import { inject, ref, type App, type InjectionKey, type Ref } from "vue";
 
-type TypeAppConfigurationClient = AppConfigurationClient | null;
+type FlagOptionsType = {
+  name: string;
+  label?: string;
+};
 
-type TypeGetFeatureFlag = (
-  name: string,
-  label?: string
-) => {
+type GetFeatureFlagType = (params: FlagOptionsType) => {
   isFeatureEnabled: Ref<boolean>;
   featureDescription: Ref<string>;
 };
 
-type TypeGetFeatureFlagAsync = (
-  name: string,
-  label?: string
-) => Promise<{
-  isFeatureEnabled: boolean;
-  featureDescription: string;
-}>;
-
 interface IFeatureFlagsManager {
-  appConfigurationClient: TypeAppConfigurationClient;
-  getFeatureFlag: TypeGetFeatureFlag;
-  getFeatureFlagAsync: TypeGetFeatureFlagAsync;
+  appConfigurationClient: AppConfigurationClientType;
+  getFeatureFlag: GetFeatureFlagType;
 }
+
+type AppConfigurationClientType = AppConfigurationClient | null;
 
 const FeatureFlagsManagerKey: InjectionKey<IFeatureFlagsManager> = Symbol(
   "FeatureFlagsManager"
 );
 
+interface IFeatureFlagCache {
+  [key: string]: {
+    isFeatureEnabled: Ref<boolean>;
+    featureDescription: Ref<string>;
+  };
+}
+
 const featureFlagsManager = (
-  connectionString?: string
+  connectionString?: string,
+  cacheEnabled = true,
+  flagsToPrefetchOptmistic: FlagOptionsType[] = []
 ): IFeatureFlagsManager => {
-  let appConfigurationClient: TypeAppConfigurationClient = null;
+  let appConfigurationClient: AppConfigurationClientType = null;
 
   if (connectionString) {
     appConfigurationClient = new AppConfigurationClient(connectionString);
   }
 
-  const getFeatureFlag: TypeGetFeatureFlag = (name, label) => {
-    const isFeatureEnabled = ref(false);
-    const featureDescription = ref("");
+  const cache: IFeatureFlagCache = {};
 
+  function prefetchFeatureFlagsOptimistic(flags: FlagOptionsType[]) {
     if (!appConfigurationClient) {
-      return { isFeatureEnabled, featureDescription };
+      return;
     }
-    try {
+    for (const { name, label } of flags) {
       appConfigurationClient
         .getConfigurationSetting({
           key: `${featureFlagPrefix}${name}`,
           label,
         })
         .then((response) => {
-          if (!isFeatureFlag(response)) {
-            return { isFeatureEnabled, featureDescription };
-          }
+          if (isFeatureFlag(response)) {
+            const {
+              value: { enabled, description = "" },
+            } = parseFeatureFlag(response);
 
+            const cacheKey = `cache-${name}-${label ?? "empty-label"}`;
+
+            cache[cacheKey] = {
+              isFeatureEnabled: ref(enabled),
+              featureDescription: ref(description),
+            };
+          }
+        })
+        .catch((error) => {
+          console.error(
+            "[App Configuration Plugin] Error prefetching feature flag.",
+            error
+          );
+        });
+    }
+  }
+
+  if (flagsToPrefetchOptmistic.length) {
+    prefetchFeatureFlagsOptimistic(flagsToPrefetchOptmistic);
+  }
+
+  const getFeatureFlag: GetFeatureFlagType = ({ name, label }) => {
+    const cacheKey = `cache-${name}-${label ?? "empty-label"}`;
+
+    if (cacheEnabled && cache[cacheKey]) {
+      return cache[cacheKey];
+    }
+
+    const isFeatureEnabled = ref(false);
+    const featureDescription = ref("");
+
+    if (!appConfigurationClient) {
+      if (cacheEnabled) {
+        cache[cacheKey] = { isFeatureEnabled, featureDescription };
+      }
+      return { isFeatureEnabled, featureDescription };
+    }
+
+    appConfigurationClient
+      .getConfigurationSetting({
+        key: `${featureFlagPrefix}${name}`,
+        label,
+      })
+      .then((response) => {
+        if (isFeatureFlag(response)) {
           const {
             value: { enabled, description = "" },
           } = parseFeatureFlag(response);
@@ -68,62 +115,133 @@ const featureFlagsManager = (
           isFeatureEnabled.value = enabled;
           featureDescription.value = description;
 
-          return { isFeatureEnabled, featureDescription };
-        });
-    } catch (error) {
-      console.error(
-        "[App Configuration Plugin] Error retrieving feature flag.",
-        error
-      );
-    }
+          if (cacheEnabled) {
+            cache[cacheKey] = { isFeatureEnabled, featureDescription };
+          }
+        }
+      })
+      .catch((error) => {
+        console.error(
+          "[App Configuration Plugin] Error retrieving feature flag.",
+          error
+        );
+      });
+
     return { isFeatureEnabled, featureDescription };
   };
 
-  const getFeatureFlagAsync: TypeGetFeatureFlagAsync = async (name, label) => {
-    let isFeatureEnabled = false;
-    let featureDescription = "";
-
-    if (!appConfigurationClient) {
-      return { isFeatureEnabled, featureDescription };
-    }
-    try {
-      const response = await appConfigurationClient.getConfigurationSetting({
-        key: `${featureFlagPrefix}${name}`,
-        label,
-      });
-      if (!isFeatureFlag(response)) {
-        return { isFeatureEnabled, featureDescription };
-      }
-      const {
-        value: { enabled, description = "" },
-      } = parseFeatureFlag(response);
-
-      isFeatureEnabled = enabled;
-      featureDescription = description;
-
-      return { isFeatureEnabled, featureDescription };
-    } catch (error) {
-      console.error(
-        "[App Configuration Plugin] Error retrieving feature flag.",
-        error
-      );
-      return { isFeatureEnabled, featureDescription };
-    }
-  };
-
-  return { appConfigurationClient, getFeatureFlag, getFeatureFlagAsync };
+  return { getFeatureFlag, appConfigurationClient };
 };
 
-function AppConfigurationPlugin(app: App, connectionString?: string) {
-  const manager = featureFlagsManager(connectionString);
-  app.provide(FeatureFlagsManagerKey, manager);
-  app.config.globalProperties.featureFlagsManager = manager;
-}
+const featureFlagsManagerAsync = async (
+  connectionString?: string,
+  flagsToPrefetch: FlagOptionsType[] = []
+): Promise<IFeatureFlagsManager> => {
+  let appConfigurationClient: AppConfigurationClientType = null;
+
+  if (connectionString) {
+    appConfigurationClient = new AppConfigurationClient(connectionString);
+  }
+
+  const cache: IFeatureFlagCache = {};
+
+  async function prefetchFeatureFlags(flags: FlagOptionsType[]) {
+    if (!appConfigurationClient) {
+      return;
+    }
+
+    await Promise.all(
+      flags.map(async ({ name, label }) => {
+        try {
+          const response =
+            await appConfigurationClient!.getConfigurationSetting({
+              key: `${featureFlagPrefix}${name}`,
+              label,
+            });
+
+          if (isFeatureFlag(response)) {
+            const {
+              value: { enabled, description = "" },
+            } = parseFeatureFlag(response);
+
+            const cacheKey = `cache-${name}-${label ?? "empty-label"}`;
+
+            cache[cacheKey] = {
+              isFeatureEnabled: ref(enabled),
+              featureDescription: ref(description),
+            };
+          }
+        } catch (error) {
+          console.error(
+            "[App Configuration Plugin] Error prefetching feature flag.",
+            error
+          );
+        }
+      })
+    );
+  }
+
+  await prefetchFeatureFlags(flagsToPrefetch);
+
+  const getFeatureFlag: GetFeatureFlagType = ({ name, label }) => {
+    const cacheKey = `cache-${name}-${label ?? "empty-label"}`;
+
+    if (cache[cacheKey]) {
+      return cache[cacheKey];
+    }
+
+    cache[cacheKey] = {
+      isFeatureEnabled: ref(false),
+      featureDescription: ref(""),
+    };
+
+    return cache[cacheKey];
+  };
+
+  return { getFeatureFlag, appConfigurationClient };
+};
+
+const AppConfigurationPlugin = {
+  install: (
+    app: App,
+    options: {
+      connectionString?: string;
+      cacheEnabled?: boolean;
+      flagsToPrefetchOptmistic?: FlagOptionsType[];
+    }
+  ) => {
+    const manager = featureFlagsManager(
+      options.connectionString,
+      options.cacheEnabled,
+      options.flagsToPrefetchOptmistic
+    );
+    app.provide(FeatureFlagsManagerKey, manager);
+  },
+};
+
+const AppConfigurationPluginAsync = {
+  _installPromise: null as Promise<void> | null,
+  install: (
+    app: App,
+    options: { connectionString?: string; flagsToPrefetch?: FlagOptionsType[] }
+  ) => {
+    AppConfigurationPluginAsync._installPromise = new Promise<void>(
+      async (resolve) => {
+        const manager = await featureFlagsManagerAsync(
+          options.connectionString,
+          options.flagsToPrefetch
+        );
+        app.provide(FeatureFlagsManagerKey, manager);
+        resolve();
+      }
+    );
+  },
+  isReady: (): Promise<void> =>
+    AppConfigurationPluginAsync._installPromise || Promise.resolve(),
+};
 
 const useFeatureFlags = () => {
-  const featureFlagsManager = inject(
-    FeatureFlagsManagerKey
-  ) as IFeatureFlagsManager;
+  const featureFlagsManager = inject(FeatureFlagsManagerKey);
   if (!featureFlagsManager) {
     throw new Error(
       "[App Configuration Plugin] FeatureFlagsManager is not provided."
@@ -132,4 +250,4 @@ const useFeatureFlags = () => {
   return featureFlagsManager;
 };
 
-export { AppConfigurationPlugin, useFeatureFlags };
+export { AppConfigurationPlugin, AppConfigurationPluginAsync, useFeatureFlags };

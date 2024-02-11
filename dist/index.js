@@ -41,6 +41,7 @@ var __async = (__this, __arguments, generator) => {
 var src_exports = {};
 __export(src_exports, {
   AppConfigurationPlugin: () => AppConfigurationPlugin,
+  AppConfigurationPluginAsync: () => AppConfigurationPluginAsync,
   useFeatureFlags: () => useFeatureFlags
 });
 module.exports = __toCommonJS(src_exports);
@@ -49,79 +50,159 @@ var import_vue = require("vue");
 var FeatureFlagsManagerKey = Symbol(
   "FeatureFlagsManager"
 );
-var featureFlagsManager = (connectionString) => {
+var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetchOptmistic = []) => {
   let appConfigurationClient = null;
   if (connectionString) {
     appConfigurationClient = new import_app_configuration.AppConfigurationClient(connectionString);
   }
-  const getFeatureFlag = (name, label) => {
-    const isFeatureEnabled = (0, import_vue.ref)(false);
-    const featureDescription = (0, import_vue.ref)("");
+  const cache = {};
+  function prefetchFeatureFlagsOptimistic(flags) {
     if (!appConfigurationClient) {
-      return { isFeatureEnabled, featureDescription };
+      return;
     }
-    try {
+    for (const { name, label } of flags) {
       appConfigurationClient.getConfigurationSetting({
         key: `${import_app_configuration.featureFlagPrefix}${name}`,
         label
       }).then((response) => {
-        if (!(0, import_app_configuration.isFeatureFlag)(response)) {
-          return { isFeatureEnabled, featureDescription };
+        if ((0, import_app_configuration.isFeatureFlag)(response)) {
+          const {
+            value: { enabled, description = "" }
+          } = (0, import_app_configuration.parseFeatureFlag)(response);
+          const cacheKey = `cache-${name}-${label != null ? label : "empty-label"}`;
+          cache[cacheKey] = {
+            isFeatureEnabled: (0, import_vue.ref)(enabled),
+            featureDescription: (0, import_vue.ref)(description)
+          };
         }
+      }).catch((error) => {
+        console.error(
+          "[App Configuration Plugin] Error prefetching feature flag.",
+          error
+        );
+      });
+    }
+  }
+  if (flagsToPrefetchOptmistic.length) {
+    prefetchFeatureFlagsOptimistic(flagsToPrefetchOptmistic);
+  }
+  const getFeatureFlag = ({ name, label }) => {
+    const cacheKey = `cache-${name}-${label != null ? label : "empty-label"}`;
+    if (cacheEnabled && cache[cacheKey]) {
+      return cache[cacheKey];
+    }
+    const isFeatureEnabled = (0, import_vue.ref)(false);
+    const featureDescription = (0, import_vue.ref)("");
+    if (!appConfigurationClient) {
+      if (cacheEnabled) {
+        cache[cacheKey] = { isFeatureEnabled, featureDescription };
+      }
+      return { isFeatureEnabled, featureDescription };
+    }
+    appConfigurationClient.getConfigurationSetting({
+      key: `${import_app_configuration.featureFlagPrefix}${name}`,
+      label
+    }).then((response) => {
+      if ((0, import_app_configuration.isFeatureFlag)(response)) {
         const {
           value: { enabled, description = "" }
         } = (0, import_app_configuration.parseFeatureFlag)(response);
         isFeatureEnabled.value = enabled;
         featureDescription.value = description;
-        return { isFeatureEnabled, featureDescription };
-      });
-    } catch (error) {
+        if (cacheEnabled) {
+          cache[cacheKey] = { isFeatureEnabled, featureDescription };
+        }
+      }
+    }).catch((error) => {
       console.error(
         "[App Configuration Plugin] Error retrieving feature flag.",
         error
       );
-    }
+    });
     return { isFeatureEnabled, featureDescription };
   };
-  const getFeatureFlagAsync = (name, label) => __async(void 0, null, function* () {
-    let isFeatureEnabled = false;
-    let featureDescription = "";
-    if (!appConfigurationClient) {
-      return { isFeatureEnabled, featureDescription };
-    }
-    try {
-      const response = yield appConfigurationClient.getConfigurationSetting({
-        key: `${import_app_configuration.featureFlagPrefix}${name}`,
-        label
-      });
-      if (!(0, import_app_configuration.isFeatureFlag)(response)) {
-        return { isFeatureEnabled, featureDescription };
-      }
-      const {
-        value: { enabled, description = "" }
-      } = (0, import_app_configuration.parseFeatureFlag)(response);
-      isFeatureEnabled = enabled;
-      featureDescription = description;
-      return { isFeatureEnabled, featureDescription };
-    } catch (error) {
-      console.error(
-        "[App Configuration Plugin] Error retrieving feature flag.",
-        error
-      );
-      return { isFeatureEnabled, featureDescription };
-    }
-  });
-  return { appConfigurationClient, getFeatureFlag, getFeatureFlagAsync };
+  return { getFeatureFlag, appConfigurationClient };
 };
-function AppConfigurationPlugin(app, connectionString) {
-  const manager = featureFlagsManager(connectionString);
-  app.provide(FeatureFlagsManagerKey, manager);
-  app.config.globalProperties.featureFlagsManager = manager;
-}
+var featureFlagsManagerAsync = (_0, ..._1) => __async(void 0, [_0, ..._1], function* (connectionString, flagsToPrefetch = []) {
+  let appConfigurationClient = null;
+  if (connectionString) {
+    appConfigurationClient = new import_app_configuration.AppConfigurationClient(connectionString);
+  }
+  const cache = {};
+  function prefetchFeatureFlags(flags) {
+    return __async(this, null, function* () {
+      if (!appConfigurationClient) {
+        return;
+      }
+      yield Promise.all(
+        flags.map((_02) => __async(this, [_02], function* ({ name, label }) {
+          try {
+            const response = yield appConfigurationClient.getConfigurationSetting({
+              key: `${import_app_configuration.featureFlagPrefix}${name}`,
+              label
+            });
+            if ((0, import_app_configuration.isFeatureFlag)(response)) {
+              const {
+                value: { enabled, description = "" }
+              } = (0, import_app_configuration.parseFeatureFlag)(response);
+              const cacheKey = `cache-${name}-${label != null ? label : "empty-label"}`;
+              cache[cacheKey] = {
+                isFeatureEnabled: (0, import_vue.ref)(enabled),
+                featureDescription: (0, import_vue.ref)(description)
+              };
+            }
+          } catch (error) {
+            console.error(
+              "[App Configuration Plugin] Error prefetching feature flag.",
+              error
+            );
+          }
+        }))
+      );
+    });
+  }
+  yield prefetchFeatureFlags(flagsToPrefetch);
+  const getFeatureFlag = ({ name, label }) => {
+    const cacheKey = `cache-${name}-${label != null ? label : "empty-label"}`;
+    if (cache[cacheKey]) {
+      return cache[cacheKey];
+    }
+    cache[cacheKey] = {
+      isFeatureEnabled: (0, import_vue.ref)(false),
+      featureDescription: (0, import_vue.ref)("")
+    };
+    return cache[cacheKey];
+  };
+  return { getFeatureFlag, appConfigurationClient };
+});
+var AppConfigurationPlugin = {
+  install: (app, options) => {
+    const manager = featureFlagsManager(
+      options.connectionString,
+      options.cacheEnabled,
+      options.flagsToPrefetchOptmistic
+    );
+    app.provide(FeatureFlagsManagerKey, manager);
+  }
+};
+var AppConfigurationPluginAsync = {
+  _installPromise: null,
+  install: (app, options) => {
+    AppConfigurationPluginAsync._installPromise = new Promise(
+      (resolve) => __async(void 0, null, function* () {
+        const manager = yield featureFlagsManagerAsync(
+          options.connectionString,
+          options.flagsToPrefetch
+        );
+        app.provide(FeatureFlagsManagerKey, manager);
+        resolve();
+      })
+    );
+  },
+  isReady: () => AppConfigurationPluginAsync._installPromise || Promise.resolve()
+};
 var useFeatureFlags = () => {
-  const featureFlagsManager2 = (0, import_vue.inject)(
-    FeatureFlagsManagerKey
-  );
+  const featureFlagsManager2 = (0, import_vue.inject)(FeatureFlagsManagerKey);
   if (!featureFlagsManager2) {
     throw new Error(
       "[App Configuration Plugin] FeatureFlagsManager is not provided."
@@ -132,6 +213,7 @@ var useFeatureFlags = () => {
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AppConfigurationPlugin,
+  AppConfigurationPluginAsync,
   useFeatureFlags
 });
 //# sourceMappingURL=index.js.map

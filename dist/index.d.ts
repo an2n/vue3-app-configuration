@@ -1,21 +1,34 @@
 import { AppConfigurationClient } from '@azure/app-configuration';
 import { App, Ref } from 'vue';
 
-type TypeAppConfigurationClient = AppConfigurationClient | null;
-type TypeGetFeatureFlag = (name: string, label?: string) => {
+type FlagOptionsType = {
+    name: string;
+    label?: string;
+};
+type GetFeatureFlagType = (params: FlagOptionsType) => {
     isFeatureEnabled: Ref<boolean>;
     featureDescription: Ref<string>;
 };
-type TypeGetFeatureFlagAsync = (name: string, label?: string) => Promise<{
-    isFeatureEnabled: boolean;
-    featureDescription: string;
-}>;
 interface IFeatureFlagsManager {
-    appConfigurationClient: TypeAppConfigurationClient;
-    getFeatureFlag: TypeGetFeatureFlag;
-    getFeatureFlagAsync: TypeGetFeatureFlagAsync;
+    appConfigurationClient: AppConfigurationClientType;
+    getFeatureFlag: GetFeatureFlagType;
 }
-declare function AppConfigurationPlugin(app: App, connectionString?: string): void;
+type AppConfigurationClientType = AppConfigurationClient | null;
+declare const AppConfigurationPlugin: {
+    install: (app: App, options: {
+        connectionString?: string;
+        cacheEnabled?: boolean;
+        flagsToPrefetchOptmistic?: FlagOptionsType[];
+    }) => void;
+};
+declare const AppConfigurationPluginAsync: {
+    _installPromise: Promise<void> | null;
+    install: (app: App, options: {
+        connectionString?: string;
+        flagsToPrefetch?: FlagOptionsType[];
+    }) => void;
+    isReady: () => Promise<void>;
+};
 declare const useFeatureFlags: () => IFeatureFlagsManager;
 
-export { AppConfigurationPlugin, useFeatureFlags };
+export { AppConfigurationPlugin, AppConfigurationPluginAsync, useFeatureFlags };
