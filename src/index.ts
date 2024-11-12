@@ -72,8 +72,6 @@ const featureFlagsManager = (
               value: { enabled, description = "", conditions },
             } = parseFeatureFlag(response);
 
-            console.log("prefetchFeatureFlagsOptimistic:::conditions", conditions);
-
             const cacheKey = `cache-${name}-${label ?? "empty-label"}`;
 
             cache[cacheKey] = {
@@ -127,8 +125,6 @@ const featureFlagsManager = (
             value: { enabled, description = "", conditions },
           } = parseFeatureFlag(response);
 
-          console.log("getFeatureFlag::::conditions", conditions);
-
           isFeatureEnabled.value = enabled;
           featureDescription.value = description;
           featureConditions.value = conditions
@@ -181,8 +177,6 @@ const featureFlagsManagerAsync = async (
             const {
               value: { enabled, description = "", conditions },
             } = parseFeatureFlag(response);
-
-            console.log("prefetchFeatureFlags:::conditions", conditions);
 
             const cacheKey = `cache-${name}-${label ?? "empty-label"}`;
 
