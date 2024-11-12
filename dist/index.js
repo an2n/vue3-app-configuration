@@ -70,6 +70,7 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
           const {
             value: { enabled, description = "", conditions }
           } = (0, import_app_configuration.parseFeatureFlag)(response);
+          console.log("prefetchFeatureFlagsOptimistic:::conditions", conditions);
           const cacheKey = `cache-${name}-${label != null ? label : "empty-label"}`;
           cache[cacheKey] = {
             isFeatureEnabled: (0, import_vue.ref)(enabled),
@@ -112,6 +113,7 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
         const {
           value: { enabled, description = "", conditions }
         } = (0, import_app_configuration.parseFeatureFlag)(response);
+        console.log("getFeatureFlag::::conditions", conditions);
         isFeatureEnabled.value = enabled;
         featureDescription.value = description;
         featureConditions.value = conditions;
@@ -152,6 +154,7 @@ var featureFlagsManagerAsync = (_0, ..._1) => __async(void 0, [_0, ..._1], funct
               const {
                 value: { enabled, description = "", conditions }
               } = (0, import_app_configuration.parseFeatureFlag)(response);
+              console.log("prefetchFeatureFlags:::conditions", conditions);
               const cacheKey = `cache-${name}-${label != null ? label : "empty-label"}`;
               cache[cacheKey] = {
                 isFeatureEnabled: (0, import_vue.ref)(enabled),
