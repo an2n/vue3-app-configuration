@@ -65,14 +65,18 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
         key: `${import_app_configuration.featureFlagPrefix}${name}`,
         label
       }).then((response) => {
+        var _a;
         if ((0, import_app_configuration.isFeatureFlag)(response)) {
           const {
-            value: { enabled, description = "" }
+            value: { enabled, description = "", conditions }
           } = (0, import_app_configuration.parseFeatureFlag)(response);
           const cacheKey = `cache-${name}-${label != null ? label : "empty-label"}`;
           cache[cacheKey] = {
             isFeatureEnabled: (0, import_vue.ref)(enabled),
-            featureDescription: (0, import_vue.ref)(description)
+            featureDescription: (0, import_vue.ref)(description),
+            featureConditions: (0, import_vue.ref)((0, import_vue.reactive)({
+              clientFilters: (_a = conditions.clientFilters) != null ? _a : []
+            }))
           };
         }
       }).catch((error) => {
@@ -93,11 +97,12 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
     }
     const isFeatureEnabled = (0, import_vue.ref)(false);
     const featureDescription = (0, import_vue.ref)("");
+    const featureConditions = (0, import_vue.ref)((0, import_vue.reactive)({}));
     if (!appConfigurationClient) {
       if (cacheEnabled) {
-        cache[cacheKey] = { isFeatureEnabled, featureDescription };
+        cache[cacheKey] = { isFeatureEnabled, featureDescription, featureConditions };
       }
-      return { isFeatureEnabled, featureDescription };
+      return { isFeatureEnabled, featureDescription, featureConditions };
     }
     appConfigurationClient.getConfigurationSetting({
       key: `${import_app_configuration.featureFlagPrefix}${name}`,
@@ -105,12 +110,13 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
     }).then((response) => {
       if ((0, import_app_configuration.isFeatureFlag)(response)) {
         const {
-          value: { enabled, description = "" }
+          value: { enabled, description = "", conditions }
         } = (0, import_app_configuration.parseFeatureFlag)(response);
         isFeatureEnabled.value = enabled;
         featureDescription.value = description;
+        featureConditions.value = conditions;
         if (cacheEnabled) {
-          cache[cacheKey] = { isFeatureEnabled, featureDescription };
+          cache[cacheKey] = { isFeatureEnabled, featureDescription, featureConditions };
         }
       }
     }).catch((error) => {
@@ -119,7 +125,7 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
         error
       );
     });
-    return { isFeatureEnabled, featureDescription };
+    return { isFeatureEnabled, featureDescription, featureConditions };
   };
   return { getFeatureFlag, appConfigurationClient };
 };
@@ -136,6 +142,7 @@ var featureFlagsManagerAsync = (_0, ..._1) => __async(void 0, [_0, ..._1], funct
       }
       yield Promise.all(
         flags.map((_02) => __async(this, [_02], function* ({ name, label }) {
+          var _a;
           try {
             const response = yield appConfigurationClient.getConfigurationSetting({
               key: `${import_app_configuration.featureFlagPrefix}${name}`,
@@ -143,12 +150,15 @@ var featureFlagsManagerAsync = (_0, ..._1) => __async(void 0, [_0, ..._1], funct
             });
             if ((0, import_app_configuration.isFeatureFlag)(response)) {
               const {
-                value: { enabled, description = "" }
+                value: { enabled, description = "", conditions }
               } = (0, import_app_configuration.parseFeatureFlag)(response);
               const cacheKey = `cache-${name}-${label != null ? label : "empty-label"}`;
               cache[cacheKey] = {
                 isFeatureEnabled: (0, import_vue.ref)(enabled),
-                featureDescription: (0, import_vue.ref)(description)
+                featureDescription: (0, import_vue.ref)(description),
+                featureConditions: (0, import_vue.ref)((0, import_vue.reactive)({
+                  clientFilters: (_a = conditions.clientFilters) != null ? _a : []
+                }))
               };
             }
           } catch (error) {
@@ -169,7 +179,10 @@ var featureFlagsManagerAsync = (_0, ..._1) => __async(void 0, [_0, ..._1], funct
     }
     cache[cacheKey] = {
       isFeatureEnabled: (0, import_vue.ref)(false),
-      featureDescription: (0, import_vue.ref)("")
+      featureDescription: (0, import_vue.ref)(""),
+      featureConditions: (0, import_vue.ref)((0, import_vue.reactive)({
+        clientFilters: []
+      }))
     };
     return cache[cacheKey];
   };
