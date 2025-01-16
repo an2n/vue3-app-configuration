@@ -14,7 +14,7 @@ type FlagOptionsType = {
 type GetFeatureFlagType = (params: FlagOptionsType) => {
   isFeatureEnabled: Ref<boolean>;
   featureDescription: Ref<string>;
-  featureConditions: Ref<IConditions>;
+  featureConditions: IConditions;
 };
 
 interface IFeatureFlagsManager {
@@ -39,7 +39,7 @@ interface IFeatureFlagCache {
   [key: string]: {
     isFeatureEnabled: Ref<boolean>;
     featureDescription: Ref<string>;
-    featureConditions: Ref<IConditions>;
+    featureConditions: IConditions;
   };
 }
 
@@ -77,9 +77,9 @@ const featureFlagsManager = (
             cache[cacheKey] = {
               isFeatureEnabled: ref(enabled),
               featureDescription: ref(description),
-              featureConditions: ref(reactive({
+              featureConditions: reactive({
                 clientFilters: conditions.clientFilters ?? []
-              }))
+              })
             };
           }
         })
@@ -105,7 +105,7 @@ const featureFlagsManager = (
 
     const isFeatureEnabled = ref(false);
     const featureDescription = ref("");
-    const featureConditions = ref(reactive({}))
+    const featureConditions = reactive({})
 
     if (!appConfigurationClient) {
       if (cacheEnabled) {
@@ -127,7 +127,7 @@ const featureFlagsManager = (
 
           isFeatureEnabled.value = enabled;
           featureDescription.value = description;
-          featureConditions.value = conditions
+          Object.assign(conditions, featureConditions)
 
           if (cacheEnabled) {
             cache[cacheKey] = { isFeatureEnabled, featureDescription, featureConditions };
@@ -183,9 +183,9 @@ const featureFlagsManagerAsync = async (
             cache[cacheKey] = {
               isFeatureEnabled: ref(enabled),
               featureDescription: ref(description),
-              featureConditions: ref(reactive({
+              featureConditions: reactive({
                 clientFilters: conditions.clientFilters ?? []
-              }))
+              })
             };
           }
         } catch (error) {
@@ -210,9 +210,9 @@ const featureFlagsManagerAsync = async (
     cache[cacheKey] = {
       isFeatureEnabled: ref(false),
       featureDescription: ref(""),
-      featureConditions: ref(reactive({
+      featureConditions: reactive({
         clientFilters: []
-      }))
+      })
     };
 
     return cache[cacheKey];

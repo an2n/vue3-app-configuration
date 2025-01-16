@@ -54,9 +54,9 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
           cache[cacheKey] = {
             isFeatureEnabled: ref(enabled),
             featureDescription: ref(description),
-            featureConditions: ref(reactive({
+            featureConditions: reactive({
               clientFilters: (_a = conditions.clientFilters) != null ? _a : []
-            }))
+            })
           };
         }
       }).catch((error) => {
@@ -77,7 +77,7 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
     }
     const isFeatureEnabled = ref(false);
     const featureDescription = ref("");
-    const featureConditions = ref(reactive({}));
+    const featureConditions = reactive({});
     if (!appConfigurationClient) {
       if (cacheEnabled) {
         cache[cacheKey] = { isFeatureEnabled, featureDescription, featureConditions };
@@ -94,7 +94,7 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
         } = parseFeatureFlag(response);
         isFeatureEnabled.value = enabled;
         featureDescription.value = description;
-        featureConditions.value = conditions;
+        Object.assign(conditions, featureConditions);
         if (cacheEnabled) {
           cache[cacheKey] = { isFeatureEnabled, featureDescription, featureConditions };
         }
@@ -136,9 +136,9 @@ var featureFlagsManagerAsync = (_0, ..._1) => __async(void 0, [_0, ..._1], funct
               cache[cacheKey] = {
                 isFeatureEnabled: ref(enabled),
                 featureDescription: ref(description),
-                featureConditions: ref(reactive({
+                featureConditions: reactive({
                   clientFilters: (_a = conditions.clientFilters) != null ? _a : []
-                }))
+                })
               };
             }
           } catch (error) {
@@ -160,9 +160,9 @@ var featureFlagsManagerAsync = (_0, ..._1) => __async(void 0, [_0, ..._1], funct
     cache[cacheKey] = {
       isFeatureEnabled: ref(false),
       featureDescription: ref(""),
-      featureConditions: ref(reactive({
+      featureConditions: reactive({
         clientFilters: []
-      }))
+      })
     };
     return cache[cacheKey];
   };

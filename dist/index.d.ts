@@ -8,7 +8,7 @@ type FlagOptionsType = {
 type GetFeatureFlagType = (params: FlagOptionsType) => {
     isFeatureEnabled: Ref<boolean>;
     featureDescription: Ref<string>;
-    featureConditions: Ref<IConditions>;
+    featureConditions: IConditions;
 };
 interface IFeatureFlagsManager {
     appConfigurationClient: AppConfigurationClientType;

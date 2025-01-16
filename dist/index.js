@@ -74,9 +74,9 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
           cache[cacheKey] = {
             isFeatureEnabled: (0, import_vue.ref)(enabled),
             featureDescription: (0, import_vue.ref)(description),
-            featureConditions: (0, import_vue.ref)((0, import_vue.reactive)({
+            featureConditions: (0, import_vue.reactive)({
               clientFilters: (_a = conditions.clientFilters) != null ? _a : []
-            }))
+            })
           };
         }
       }).catch((error) => {
@@ -97,7 +97,7 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
     }
     const isFeatureEnabled = (0, import_vue.ref)(false);
     const featureDescription = (0, import_vue.ref)("");
-    const featureConditions = (0, import_vue.ref)((0, import_vue.reactive)({}));
+    const featureConditions = (0, import_vue.reactive)({});
     if (!appConfigurationClient) {
       if (cacheEnabled) {
         cache[cacheKey] = { isFeatureEnabled, featureDescription, featureConditions };
@@ -114,7 +114,7 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
         } = (0, import_app_configuration.parseFeatureFlag)(response);
         isFeatureEnabled.value = enabled;
         featureDescription.value = description;
-        featureConditions.value = conditions;
+        Object.assign(conditions, featureConditions);
         if (cacheEnabled) {
           cache[cacheKey] = { isFeatureEnabled, featureDescription, featureConditions };
         }
@@ -156,9 +156,9 @@ var featureFlagsManagerAsync = (_0, ..._1) => __async(void 0, [_0, ..._1], funct
               cache[cacheKey] = {
                 isFeatureEnabled: (0, import_vue.ref)(enabled),
                 featureDescription: (0, import_vue.ref)(description),
-                featureConditions: (0, import_vue.ref)((0, import_vue.reactive)({
+                featureConditions: (0, import_vue.reactive)({
                   clientFilters: (_a = conditions.clientFilters) != null ? _a : []
-                }))
+                })
               };
             }
           } catch (error) {
@@ -180,9 +180,9 @@ var featureFlagsManagerAsync = (_0, ..._1) => __async(void 0, [_0, ..._1], funct
     cache[cacheKey] = {
       isFeatureEnabled: (0, import_vue.ref)(false),
       featureDescription: (0, import_vue.ref)(""),
-      featureConditions: (0, import_vue.ref)((0, import_vue.reactive)({
+      featureConditions: (0, import_vue.reactive)({
         clientFilters: []
-      }))
+      })
     };
     return cache[cacheKey];
   };
