@@ -4,7 +4,7 @@ import {
   isFeatureFlag,
   parseFeatureFlag,
 } from "@azure/app-configuration";
-import { inject, ref, type App, type InjectionKey, type Ref } from "vue";
+import { inject, reactive, ref, type App, type InjectionKey, type Ref } from "vue";
 
 type FlagOptionsType = {
   name: string;
@@ -14,6 +14,7 @@ type FlagOptionsType = {
 type GetFeatureFlagType = (params: FlagOptionsType) => {
   isFeatureEnabled: Ref<boolean>;
   featureDescription: Ref<string>;
+  featureConditions: IConditions;
 };
 
 interface IFeatureFlagsManager {
@@ -27,10 +28,18 @@ const FeatureFlagsManagerKey: InjectionKey<IFeatureFlagsManager> = Symbol(
   "FeatureFlagsManager"
 );
 
+interface IConditions {
+  clientFilters?: {
+    name: string;
+    parameters?: Record<string, unknown>;
+  }[];
+}
+
 interface IFeatureFlagCache {
   [key: string]: {
     isFeatureEnabled: Ref<boolean>;
     featureDescription: Ref<string>;
+    featureConditions: IConditions;
   };
 }
 
@@ -60,7 +69,7 @@ const featureFlagsManager = (
         .then((response) => {
           if (isFeatureFlag(response)) {
             const {
-              value: { enabled, description = "" },
+              value: { enabled, description = "", conditions },
             } = parseFeatureFlag(response);
 
             const cacheKey = `cache-${name}-${label ?? "empty-label"}`;
@@ -68,6 +77,9 @@ const featureFlagsManager = (
             cache[cacheKey] = {
               isFeatureEnabled: ref(enabled),
               featureDescription: ref(description),
+              featureConditions: reactive({
+                clientFilters: conditions.clientFilters ?? []
+              })
             };
           }
         })
@@ -93,12 +105,13 @@ const featureFlagsManager = (
 
     const isFeatureEnabled = ref(false);
     const featureDescription = ref("");
+    const featureConditions = reactive({})
 
     if (!appConfigurationClient) {
       if (cacheEnabled) {
-        cache[cacheKey] = { isFeatureEnabled, featureDescription };
+        cache[cacheKey] = { isFeatureEnabled, featureDescription, featureConditions };
       }
-      return { isFeatureEnabled, featureDescription };
+      return { isFeatureEnabled, featureDescription, featureConditions };
     }
 
     appConfigurationClient
@@ -109,14 +122,15 @@ const featureFlagsManager = (
       .then((response) => {
         if (isFeatureFlag(response)) {
           const {
-            value: { enabled, description = "" },
+            value: { enabled, description = "", conditions },
           } = parseFeatureFlag(response);
 
           isFeatureEnabled.value = enabled;
           featureDescription.value = description;
+          Object.assign(conditions, featureConditions)
 
           if (cacheEnabled) {
-            cache[cacheKey] = { isFeatureEnabled, featureDescription };
+            cache[cacheKey] = { isFeatureEnabled, featureDescription, featureConditions };
           }
         }
       })
@@ -127,7 +141,7 @@ const featureFlagsManager = (
         );
       });
 
-    return { isFeatureEnabled, featureDescription };
+    return { isFeatureEnabled, featureDescription, featureConditions };
   };
 
   return { getFeatureFlag, appConfigurationClient };
@@ -161,7 +175,7 @@ const featureFlagsManagerAsync = async (
 
           if (isFeatureFlag(response)) {
             const {
-              value: { enabled, description = "" },
+              value: { enabled, description = "", conditions },
             } = parseFeatureFlag(response);
 
             const cacheKey = `cache-${name}-${label ?? "empty-label"}`;
@@ -169,6 +183,9 @@ const featureFlagsManagerAsync = async (
             cache[cacheKey] = {
               isFeatureEnabled: ref(enabled),
               featureDescription: ref(description),
+              featureConditions: reactive({
+                clientFilters: conditions.clientFilters ?? []
+              })
             };
           }
         } catch (error) {
@@ -193,6 +210,9 @@ const featureFlagsManagerAsync = async (
     cache[cacheKey] = {
       isFeatureEnabled: ref(false),
       featureDescription: ref(""),
+      featureConditions: reactive({
+        clientFilters: []
+      })
     };
 
     return cache[cacheKey];

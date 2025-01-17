@@ -8,12 +8,19 @@ type FlagOptionsType = {
 type GetFeatureFlagType = (params: FlagOptionsType) => {
     isFeatureEnabled: Ref<boolean>;
     featureDescription: Ref<string>;
+    featureConditions: IConditions;
 };
 interface IFeatureFlagsManager {
     appConfigurationClient: AppConfigurationClientType;
     getFeatureFlag: GetFeatureFlagType;
 }
 type AppConfigurationClientType = AppConfigurationClient | null;
+interface IConditions {
+    clientFilters?: {
+        name: string;
+        parameters?: Record<string, unknown>;
+    }[];
+}
 declare const AppConfigurationPlugin: {
     install: (app: App, options: {
         connectionString?: string;

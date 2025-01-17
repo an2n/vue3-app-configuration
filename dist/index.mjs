@@ -26,7 +26,7 @@ import {
   isFeatureFlag,
   parseFeatureFlag
 } from "@azure/app-configuration";
-import { inject, ref } from "vue";
+import { inject, reactive, ref } from "vue";
 var FeatureFlagsManagerKey = Symbol(
   "FeatureFlagsManager"
 );
@@ -45,14 +45,18 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
         key: `${featureFlagPrefix}${name}`,
         label
       }).then((response) => {
+        var _a;
         if (isFeatureFlag(response)) {
           const {
-            value: { enabled, description = "" }
+            value: { enabled, description = "", conditions }
           } = parseFeatureFlag(response);
           const cacheKey = `cache-${name}-${label != null ? label : "empty-label"}`;
           cache[cacheKey] = {
             isFeatureEnabled: ref(enabled),
-            featureDescription: ref(description)
+            featureDescription: ref(description),
+            featureConditions: reactive({
+              clientFilters: (_a = conditions.clientFilters) != null ? _a : []
+            })
           };
         }
       }).catch((error) => {
@@ -73,11 +77,12 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
     }
     const isFeatureEnabled = ref(false);
     const featureDescription = ref("");
+    const featureConditions = reactive({});
     if (!appConfigurationClient) {
       if (cacheEnabled) {
-        cache[cacheKey] = { isFeatureEnabled, featureDescription };
+        cache[cacheKey] = { isFeatureEnabled, featureDescription, featureConditions };
       }
-      return { isFeatureEnabled, featureDescription };
+      return { isFeatureEnabled, featureDescription, featureConditions };
     }
     appConfigurationClient.getConfigurationSetting({
       key: `${featureFlagPrefix}${name}`,
@@ -85,12 +90,13 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
     }).then((response) => {
       if (isFeatureFlag(response)) {
         const {
-          value: { enabled, description = "" }
+          value: { enabled, description = "", conditions }
         } = parseFeatureFlag(response);
         isFeatureEnabled.value = enabled;
         featureDescription.value = description;
+        Object.assign(conditions, featureConditions);
         if (cacheEnabled) {
-          cache[cacheKey] = { isFeatureEnabled, featureDescription };
+          cache[cacheKey] = { isFeatureEnabled, featureDescription, featureConditions };
         }
       }
     }).catch((error) => {
@@ -99,7 +105,7 @@ var featureFlagsManager = (connectionString, cacheEnabled = true, flagsToPrefetc
         error
       );
     });
-    return { isFeatureEnabled, featureDescription };
+    return { isFeatureEnabled, featureDescription, featureConditions };
   };
   return { getFeatureFlag, appConfigurationClient };
 };
@@ -116,6 +122,7 @@ var featureFlagsManagerAsync = (_0, ..._1) => __async(void 0, [_0, ..._1], funct
       }
       yield Promise.all(
         flags.map((_02) => __async(this, [_02], function* ({ name, label }) {
+          var _a;
           try {
             const response = yield appConfigurationClient.getConfigurationSetting({
               key: `${featureFlagPrefix}${name}`,
@@ -123,12 +130,15 @@ var featureFlagsManagerAsync = (_0, ..._1) => __async(void 0, [_0, ..._1], funct
             });
             if (isFeatureFlag(response)) {
               const {
-                value: { enabled, description = "" }
+                value: { enabled, description = "", conditions }
               } = parseFeatureFlag(response);
               const cacheKey = `cache-${name}-${label != null ? label : "empty-label"}`;
               cache[cacheKey] = {
                 isFeatureEnabled: ref(enabled),
-                featureDescription: ref(description)
+                featureDescription: ref(description),
+                featureConditions: reactive({
+                  clientFilters: (_a = conditions.clientFilters) != null ? _a : []
+                })
               };
             }
           } catch (error) {
@@ -149,7 +159,10 @@ var featureFlagsManagerAsync = (_0, ..._1) => __async(void 0, [_0, ..._1], funct
     }
     cache[cacheKey] = {
       isFeatureEnabled: ref(false),
-      featureDescription: ref("")
+      featureDescription: ref(""),
+      featureConditions: reactive({
+        clientFilters: []
+      })
     };
     return cache[cacheKey];
   };
